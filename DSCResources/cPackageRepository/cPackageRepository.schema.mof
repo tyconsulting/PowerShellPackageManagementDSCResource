@@ -1,0 +1,10 @@
+[ClassVersion("1.0.0"), FriendlyName("cPackageRepository")] 
+class cPackageRepository : OMI_BaseResource
+{
+  [Key, Description("The name of the PowerShell Repository")] string Name;
+  [write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] string Ensure;
+  [write,ValueMap{"Trusted","Untrusted"},Values{"Trusted", "Untrusted"}] string InstallationPolicy;
+  [Required, Description("The repository source location.")] string SourceLocation;
+  [write, Description("The repository publish location.")] string PublishLocation;
+  [write, Description("The repository package management provider.")] string PackageManagementProvider;
+};
