@@ -20,7 +20,24 @@ Function Get-TargetResource
 		  [parameter(Mandatory = $true,HelpMessage='Enter PowerShell Repository Name')]
       [ValidateNotNullOrEmpty()]
 		  [System.String]
-		  $RepositoryName
+		  $RepositoryName,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+      [ValidateRange(0,24)]
+		  [System.Int32]
+		  $MaintenanceStartHour,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+      [ValidateRange(0,60)]
+		  [System.Int32]
+		  $MaintenanceStartMinute,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+		  [System.Int32]
+		  $MaintenanceLengthMinute
     )
     $arrModules = @()
     
@@ -35,7 +52,7 @@ Function Get-TargetResource
         $parms.Add('RequiredVersion', $PSModuleVersion)
         Write-Verbose ("Getting module '{0}' version '{1}' from repository  '{2}'." -f $PSModuleName, $PSModuleVersion, $RepositoryName)
       } else {
-        Write-Verbose ("Getting the latest version of module '{0}' from repository  '{1}'." -f $PSModuleName, $RepositoryName)
+        Write-Verbose ("Getting the latest version of module '{0}' from repository '{1}'." -f $PSModuleName, $RepositoryName)
       }
     } else {
       Write-Verbose ("Getting all modules from repository  '{0}'." -f $RepositoryName)
@@ -86,7 +103,24 @@ Function Set-TargetResource
 		  [parameter(Mandatory = $true,HelpMessage='Add help message for user')]
       [ValidateNotNullOrEmpty()]
 		  [System.String]
-		  $RepositoryName
+		  $RepositoryName,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+      [ValidateRange(0,24)]
+		  [System.Int32]
+		  $MaintenanceStartHour,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+      [ValidateRange(0,60)]
+		  [System.Int32]
+		  $MaintenanceStartMinute,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+		  [System.Int32]
+		  $MaintenanceLengthMinute
     )
     Write-Output ("Getting modules from repository  '{0}'." -f $RepositoryName)
     $parms = @{
@@ -113,22 +147,37 @@ Function Set-TargetResource
         {
           If ($PSBoundParameters.ContainsKey('PSModuleVersion'))
           {
-            Write-Verbose ("Uinstalling Module {0} version '{1}'." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
-            $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -RequiredVersion $ModuleInRepo.Version -Force -ErrorVariable ev -ErrorAction SilentlyContinue
+            #Make sure uninstallation is not actioned outside of the maintenance window
+            if (Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute)
+            {
+              Write-Verbose ("Uinstalling Module {0} version '{1}'." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
+              $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -RequiredVersion $ModuleInRepo.Version -Force -ErrorVariable ev -ErrorAction SilentlyContinue
+            } else {
+              Write-Verbose ("Module {0} version '{1}' will not be uninstalled at this time because it is out side of configured maintenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
+            }
           } else {
-            Write-Verbose ("Uinstalling all versions of Module {0}." -f $ModuleInRepo.Name)
-            $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -AllVersions -Force -ErrorVariable ev -ErrorAction SilentlyContinue
+            #Make sure uninstallation is not actioned outside of the maintenance window
+            if (Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute)
+            {
+              Write-Verbose ("Uinstalling all versions of Module {0}." -f $ModuleInRepo.Name)
+              $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -AllVersions -Force -ErrorVariable ev -ErrorAction SilentlyContinue
+            } else {
+              Write-Verbose ("All versions of Module {0} will not be uninstalled at this time because it is outside of configured maintenance window." -f $ModuleInRepo.Name)
+            }
           }
-          
         }
       } else {
         Write-Verbose ("Module {0} version '{1}' is not installed." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
         if ($Ensure -ieq 'present')
         {
-          Write-Verbose ("installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
-          $InstallModule = Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName
-        }
-        
+          if (Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute)
+          {
+            Write-Verbose ("installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
+            $InstallModule = Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName
+          } else {
+            Write-Verbose ("Module {0} version '{1}' will not be installed at this time because it is outside of configured maitnenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
+          }
+        }        
       }
     }
 
@@ -160,7 +209,24 @@ Function Test-TargetResource
 		  [parameter(Mandatory = $true)]
       [ValidateNotNullOrEmpty()]
 		  [System.String]
-		  $RepositoryName
+		  $RepositoryName,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+      [ValidateRange(0,24)]
+		  [System.Int32]
+		  $MaintenanceStartHour,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+      [ValidateRange(0,60)]
+		  [System.Int32]
+		  $MaintenanceStartMinute,
+
+		  [parameter(Mandatory = $false)]
+      [ValidateNotNullOrEmpty()]
+		  [System.Int32]
+		  $MaintenanceLengthMinute
     )
     $arrModules = Get-TargetResource @PSBoundParameters
     $result = $true
@@ -173,5 +239,48 @@ Function Test-TargetResource
       }
     }
     $result
+}
+
+Function Validate-MaintenanceWindow
+{
+  [CmdletBinding()]
+  [OutputType([System.Boolean])]
+  Param (
+		[parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateRange(0,24)]
+		[System.Int32]
+		$MaintenanceStartHour,
+
+		[parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateRange(0,60)]
+		[System.Int32]
+		$MaintenanceStartMinute,
+
+		[parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+		[System.Int32]
+		$MaintenanceLengthMinute
+  )
+
+  
+  If ($PSBoundParameters.ContainsKey('MaintenanceStartHour') -and $PSBoundParameters.ContainsKey('MaintenanceStartMinute') -and $PSBoundParameters.ContainsKey('MaintenanceLengthMinute'))
+  {
+    $MaintenanceStartTime = Get-Date -Hour $MaintenanceStartHour -Minute $MaintenanceStartMinute
+    $now = Get-Date
+    $MaintenanceEndTime = $MaintenanceStartTime.AddMinutes($MaintenanceLengthMinute)
+    #Check if the current datetime is within the maintenance window.
+    If ($MaintenanceStartTime -le $now -and $MaintenanceEndTime -gt $now)
+    {
+      $bWithinMaintWindow = $true
+    } else {
+      $bWithinMaintWindow = $false
+    }
+  } else {
+    #if $MaintenanceStartTime and $MaintenanceLength minutes are not specified, return $true
+    $bWithinMaintWindow = $true
+  }
+  $bWithinMaintWindow
 }
 Export-ModuleMember -Function *-TargetResource

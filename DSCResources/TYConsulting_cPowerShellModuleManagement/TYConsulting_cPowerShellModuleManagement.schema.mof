@@ -5,4 +5,7 @@ class TYConsulting_cPowerShellModuleManagement : OMI_BaseResource
   [write, ValueMap{"Present", "Absent"}, Values{"Present", "Absent"}] string Ensure;
   [Key, Description("The name of the PowerShell module. Use value 'All' to specify all modules in the repository.")] string PSModuleName;
   [write, Description("The PowerShell module version.")] string PSModuleVersion;
+  [write, Description("The Maintenance Window Start Hour (0-24).")] sint32 MaintenanceStartHour;
+  [write, Description("The Maintenance Window Start Minute (0-60).")] sint32 MaintenanceStartMinute;
+  [write, Description("The Maintenance Window length in minute.")] sint32 MaintenanceLengthMinute;
 };
