@@ -134,7 +134,15 @@ Function Set-TargetResource
         $parms.Add('RequiredVersion', $PSModuleVersion)
       }
     }
-
+    #check if Installation / Uninstallation can be actioned at this point of time
+    If ($PSBoundParameters.ContainsKey('MaintenanceStartHour') -and $PSBoundParameters.ContainsKey('MaintenanceStartMinute') -and $PSBoundParameters.ContainsKey('MaintenanceLengthMinute'))
+    {
+      $bOKtoAction = Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute
+    } else {
+      #If maintenance window is not specified, set to true
+      Write-Verbose 'Maintenance window is not specified. It will be ignored.'
+      $bOKtoAction = $true
+    }
     $ModulesInRepo = Find-Module @parms -ErrorVariable ev -ErrorAction SilentlyContinue
 
     Foreach ($ModuleInRepo in $ModulesInRepo)
@@ -148,7 +156,7 @@ Function Set-TargetResource
           If ($PSBoundParameters.ContainsKey('PSModuleVersion'))
           {
             #Make sure uninstallation is not actioned outside of the maintenance window
-            if (Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute)
+            if ($bOKtoAction)
             {
               Write-Verbose ("Uinstalling Module {0} version '{1}'." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
               $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -RequiredVersion $ModuleInRepo.Version -Force -ErrorVariable ev -ErrorAction SilentlyContinue
@@ -157,7 +165,7 @@ Function Set-TargetResource
             }
           } else {
             #Make sure uninstallation is not actioned outside of the maintenance window
-            if (Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute)
+            if ($bOKtoAction)
             {
               Write-Verbose ("Uinstalling all versions of Module {0}." -f $ModuleInRepo.Name)
               $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -AllVersions -Force -ErrorVariable ev -ErrorAction SilentlyContinue
@@ -170,9 +178,9 @@ Function Set-TargetResource
         Write-Verbose ("Module {0} version '{1}' is not installed." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
         if ($Ensure -ieq 'present')
         {
-          if (Validate-MaintenanceWindow -MaintenanceStartHour $MaintenanceStartHour -MaintenanceStartMinute $MaintenanceStartMinute -MaintenanceLengthMinute $MaintenanceLengthMinute)
+          if ($bOKtoAction)
           {
-            Write-Verbose ("installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
+            Write-Verbose ("Installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
             $InstallModule = Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName
           } else {
             Write-Verbose ("Module {0} version '{1}' will not be installed at this time because it is outside of configured maitnenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
@@ -246,41 +254,37 @@ Function Validate-MaintenanceWindow
   [CmdletBinding()]
   [OutputType([System.Boolean])]
   Param (
-		[parameter(Mandatory = $false)]
+		[parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [ValidateRange(0,24)]
 		[System.Int32]
 		$MaintenanceStartHour,
 
-		[parameter(Mandatory = $false)]
+		[parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [ValidateRange(0,60)]
 		[System.Int32]
 		$MaintenanceStartMinute,
 
-		[parameter(Mandatory = $false)]
+		[parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
 		[System.Int32]
 		$MaintenanceLengthMinute
   )
 
-  
-  If ($PSBoundParameters.ContainsKey('MaintenanceStartHour') -and $PSBoundParameters.ContainsKey('MaintenanceStartMinute') -and $PSBoundParameters.ContainsKey('MaintenanceLengthMinute'))
+  $MaintenanceStartTime = Get-Date -Hour $MaintenanceStartHour -Minute $MaintenanceStartMinute
+  $now = Get-Date
+  $MaintenanceEndTime = $MaintenanceStartTime.AddMinutes($MaintenanceLengthMinute)
+  Write-Verbose "Maintenance Window Start Time: $($MaintenanceStartTime.Tostring())"
+  Write-Verbose "Maintenance Window End Time: $($MaintenanceEndTime.Tostring())"
+  #Check if the current datetime is within the maintenance window.
+  If ($MaintenanceStartTime -le $now -and $MaintenanceEndTime -gt $now)
   {
-    $MaintenanceStartTime = Get-Date -Hour $MaintenanceStartHour -Minute $MaintenanceStartMinute
-    $now = Get-Date
-    $MaintenanceEndTime = $MaintenanceStartTime.AddMinutes($MaintenanceLengthMinute)
-    #Check if the current datetime is within the maintenance window.
-    If ($MaintenanceStartTime -le $now -and $MaintenanceEndTime -gt $now)
-    {
-      $bWithinMaintWindow = $true
-    } else {
-      $bWithinMaintWindow = $false
-    }
-  } else {
-    #if $MaintenanceStartTime and $MaintenanceLength minutes are not specified, return $true
     $bWithinMaintWindow = $true
+  } else {
+    $bWithinMaintWindow = $false
   }
+
   $bWithinMaintWindow
 }
 Export-ModuleMember -Function *-TargetResource
