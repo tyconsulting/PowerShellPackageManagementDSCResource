@@ -1,6 +1,6 @@
 Function Get-TargetResource
 {
-    [CommandBidning()]
+    [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
     param(
       [ValidateSet("Present","Absent")]
@@ -30,14 +30,17 @@ Function Get-TargetResource
 		  [System.String]
 		  $PackageManagementProvider = 'NuGet'
     )
-    Write-Vebose "Checking if PS Repository '$Name' exists."
-    $PSRepository = Get-PSRepository | Where-Object {$_.Name -ieq $Name}
-    If ($PSRepository -ne $null)
+    Write-Verbose "Checking if PS Repository '$Name' exists."
+    $PSRepository = Get-PSRepository -Name $Name -ErrorVariable ev1 -ErrorAction SilentlyContinue
+    If ($null -eq $ev1 -or $ev1.count -eq 0)
     {
+      Write-Verbose "PS Repository '$Name' is Present."
       $Ensure = 'Present'
     } else {
+    Write-Verbose "PS Repository '$Name' is Absent."
       $Ensure = 'Absent'
     }
+    
     $GetTargetResourceResult = $null
     $GetTargetResourceResult = @{
       Name = $PSRepository.Name
@@ -52,7 +55,7 @@ Function Get-TargetResource
 
 Function Set-TargetResource
 {
-    [CommandBidning()]
+    [CmdletBinding()]
     param(
       [ValidateSet("Present","Absent")]
 		  [System.String]
@@ -81,14 +84,25 @@ Function Set-TargetResource
 		  [System.String]
 		  $PackageManagementProvider = 'NuGet'
     )
-    $PSRepository = Get-PSRepository | Where-Object {$_.Name -ieq $Name}
+    #$PSRepository = Get-PSRepository | Where-Object {$_.Name -ieq $Name}
     Write-Verbose "Ensure PS Repository '$Name' is '$Ensure'."
+    $PSRepository = Get-PSRepository -Name $Name -ErrorVariable ev2 -ErrorAction SilentlyContinue
     Switch ($Ensure)
     {
       'Present'
       {
-        If ($PSRepository -eq $null)
+        If ($null -eq $ev2 -or $ev2.count -eq 0)
         {
+          Write-Verbose "PS Repository '$Name' already exist. Configuring it with configured parameters."
+          $Parms = @{
+            Name = $Name
+            InstallationPolicy = $InstallationPolicy
+            SourceLocation = $SourceLocation
+            PublishLocation = $PublishLocation
+            PackageManagementProvider = $PackageManagementProvider
+          }
+          $SetPSRepository = Set-PSRepository @Parms 
+        } else {
           Write-Verbose "PS Repository '$Name' does not exist. creating it now."
           $Parms = @{
             Name = $Name
@@ -98,21 +112,11 @@ Function Set-TargetResource
             PackageManagementProvider = $PackageManagementProvider
           }
           $NewPSRepository = Register-PSRepository @Parms
-        } else {
-          Write-Verbose "PS Repository '$Name' already exist. Setting with with configured parameters."
-          $Parms = @{
-            Name = $Name
-            InstallationPolicy = $InstallationPolicy
-            SourceLocation = $SourceLocation
-            PublishLocation = $PublishLocation
-            PackageManagementProvider = $PackageManagementProvider
-          }
-          $SetPSRepository = Set-PSRepository -Name @Parms 
         }
       }
       'Absent'
       {
-        If ($PSRepository -ne $null)
+        If ($null -eq $ev2 -or $ev2.count -eq 0)
         {
           Write-Verbose "PS Repository '$Name' exists, removing it now."
           $RemovePSRepository = Unregister-PSRepository -Name $Name
@@ -161,15 +165,31 @@ Function Test-TargetResource
     )
     $PSRepository = Get-TargetResource @PSBoundParameters
     $Result = ($PSRepository.Ensure -eq $Ensure)
-    #If test result is $true, then check PS repository configurations
-    If ($Result -eq $true)
+    #If test result is $true and Ensure = "Present", then check PS repository configurations
+    If ($Result -eq $true -and $Ensure -ieq "Present")
     {
-      if ($InstallationPolicy -ne $PSRepository.InstallationPolicy -or $SourceLocation -ne $PSRepository.SourceLocation -or $PublishLocation -ne $PSRepository.PublishLocation -or $PackageManagementProvider -ne $PSRepository.PackageManagementProvider)
+      if ($InstallationPolicy -ine $PSRepository.InstallationPolicy)
       {
-        Write-Verbose "PS Repository '$Name' configuration is not configured as defined in the configuration."
+        Write-Verbose "PS Repository '$Name' InstallationPolicy is not configured as defined in the configuration. Desired Value: '$InstallationPolicy', Current Configuration: '$($PSRepository.InstallationPolicy)'"
+        $Result = $false
+      }
+      if ($SourceLocation -ine $PSRepository.SourceLocation)
+      {
+        Write-Verbose "PS Repository '$Name' SourceLocation is not configured as defined in the configuration. Desired Value: '$SourceLocation', Current Configuration: '$($PSRepository.SourceLocation)'"
+        $Result = $false
+      }
+      if ($PublishLocation -ine $PSRepository.PublishLocation)
+      {
+        Write-Verbose "PS Repository '$Name' PublishLocation is not configured as defined in the configuration. Desired Value: '$PublishLocation', Current Configuration: '$($PSRepository.PublishLocation)'"
+        $Result = $false
+      }
+      if ($PackageManagementProvider -ine $PSRepository.PackageManagementProvider)
+      {
+        Write-Verbose "PS Repository '$Name' PackageManagementProvider is not configured as defined in the configuration. Desired Value: '$PackageManagementProvider', Current Configuration: '$($PSRepository.PackageManagementProvider)'"
         $Result = $false
       }
     }
+    Write-Verbose "Test Result: $Result"
     $Result
 }
 

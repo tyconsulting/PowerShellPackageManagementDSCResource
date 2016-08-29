@@ -1,0 +1,8 @@
+[ClassVersion("1.0.0"), FriendlyName("cPowerShellModuleManagement")] 
+class TYConsulting_cPowerShellModuleManagement : OMI_BaseResource
+{
+  [Key, Description("The name of the PowerShell Repository")] string RepositoryName;
+  [write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] string Ensure;
+  [write, Description("The name of the PowerShell module.")] string ModuleName;
+  [write, Description("The PowerShell module version.")] string ModuleVersion;
+};

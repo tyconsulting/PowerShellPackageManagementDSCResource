@@ -1,0 +1,10 @@
+[ClassVersion("1.0.0"), FriendlyName("cPowerShellRepository")] 
+class TYConsulting_cPowerShellRepository : OMI_BaseResource
+{
+  [Key, Description("The name of the PowerShell Repository")] string Name;
+  [write, Description("An enumerated value that describes if the PowerShell Repository is expected to be installed on not on the machine.\nPresent {default}  \nAbsent   \n"), ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] string Ensure;
+  [write, Description("An enumerated value that describes if the PowerShell Repository is trusted or not on the machine.\nUntrusted {default}  \nTrusted   \n"), ValueMap{"Trusted","Untrusted"},Values{"Trusted", "Untrusted"}] string InstallationPolicy;
+  [write, Description("The repository source location.")] string SourceLocation;
+  [write, Description("The repository publish location.")] string PublishLocation;
+  [write, Description("The repository package management provider. If not specified, 'NuGet' will be assigned.")] string PackageManagementProvider;
+};
