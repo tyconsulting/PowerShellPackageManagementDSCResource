@@ -24,13 +24,13 @@ Function Get-TargetResource
 
 		  [parameter(Mandatory = $false)]
       [ValidateNotNullOrEmpty()]
-      [ValidateRange(0,24)]
+      [ValidateRange(0,23)]
 		  [System.Int32]
 		  $MaintenanceStartHour,
 
 		  [parameter(Mandatory = $false)]
       [ValidateNotNullOrEmpty()]
-      [ValidateRange(0,60)]
+      [ValidateRange(0,59)]
 		  [System.Int32]
 		  $MaintenanceStartMinute,
 
@@ -107,13 +107,13 @@ Function Set-TargetResource
 
 		  [parameter(Mandatory = $false)]
       [ValidateNotNullOrEmpty()]
-      [ValidateRange(0,24)]
+      [ValidateRange(0,23)]
 		  [System.Int32]
 		  $MaintenanceStartHour,
 
 		  [parameter(Mandatory = $false)]
       [ValidateNotNullOrEmpty()]
-      [ValidateRange(0,60)]
+      [ValidateRange(0,59)]
 		  [System.Int32]
 		  $MaintenanceStartMinute,
 
@@ -221,13 +221,13 @@ Function Test-TargetResource
 
 		  [parameter(Mandatory = $false)]
       [ValidateNotNullOrEmpty()]
-      [ValidateRange(0,24)]
+      [ValidateRange(0,23)]
 		  [System.Int32]
 		  $MaintenanceStartHour,
 
 		  [parameter(Mandatory = $false)]
       [ValidateNotNullOrEmpty()]
-      [ValidateRange(0,60)]
+      [ValidateRange(0,59)]
 		  [System.Int32]
 		  $MaintenanceStartMinute,
 
