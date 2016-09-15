@@ -1,11 +1,14 @@
 # cPowerShellPackageManagement DSC Resource
-Used to manage PoweShell modules and package repositories
+A PowerShell Desired State Configuration Resource module that can be used to manage PoweShell modules and package repositories on Windows computers running PowerShell version 5 and above.
+
 Author - Tao Yang
 
+Copyright - (c) 2016 TY Consulting Pty. Ltd. All rights reserved.
+
 ## DSC Resources
-================
+----------------
 ### CPowerShellRepository
--------------------------
+
 #### Syntax
 ```PowerShell
 cPowerShellRepository [String] #ResourceName
@@ -24,11 +27,12 @@ cPowerShellRepository [String] #ResourceName
 To register a feed, you will need to specify some basic information such as PublishLocation and SourceLocation. You can also set Ensure = Absent to un-register the feed with the name specified in the Name parameter.
 
 When not specified, the InstallationPolicy field default value is “Untrusted”. If you’d like to set the repository as a trusted repository, set this value to “Trusted”.
-##### Note:
+
+**Note:**
 since the repository registration is based on each user (as opposed to machine based settings) and DSC configuration is executed under LocalSystem context. you will not be able to see the repository added by this resource if you run Get-PSRepository cmdlet under your own user account. If you start PowerShell under LocalSystem by using PsExec (run **_psexec /i /s /d powershell.exe_**), you will be able to see the repository.
 
 ### CPowerShellModuleManagement
--------------------------------
+
 #### Syntax
 ```PowerShell
 cPowerShellModuleManagement [String] #ResourceName
@@ -51,7 +55,7 @@ cPowerShellModuleManagement [String] #ResourceName
 * **MaintenanceStartHour, MaintenanceStartMinute and MaintenanceLengthMinute** – Since the LCM will run the DSC configuration on a pre-configured interval, you may not want to install / uninstall modules during business hours. Therefore, you can set the maintenance start hour (0-23) and start minute (0-59) to specify the start time of the maintenance window. MaintenanceLengthMinute represents the length of the maintenance window in minutes. These fields are optional, when specified, module installation and uninstallation will only take place when the LCM runs the configuration within the maintenance window. Note: Please make sure the MaintenanceLengthMinute is greater than the value configured for the LCM ConfigurationModeFrequencyMins property.
 
 ## Sample DSC Configurations
-============================
+----------------------------
 ### Register to a On-Prem ProGet feed and install all modules from the feed
 ```PowerShell
 Configuration SampleProGetConfiguration
@@ -118,3 +122,8 @@ Configuration SampleMyGetConfiguration
     }
 }
 ```
+## Additional Resources
+-----------------------
+**Module hosted in PowerShell Gallery: [https://www.powershellgallery.com/packages/cPowerShellPackageManagement](https://www.powershellgallery.com/packages/cPowerShellPackageManagement)**
+
+**Blog article by Tao Yang -  [http://blog.tyang.org/2016/09/15/powershell-dsc-r…ries-and-modules/]( http://blog.tyang.org/2016/09/15/powershell-dsc-r…ries-and-modules/)**
