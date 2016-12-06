@@ -181,7 +181,7 @@ Function Set-TargetResource
           if ($bOKtoAction)
           {
             Write-Verbose ("Installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
-            $InstallModule = Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers
+            $InstallModule = Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber
           } else {
             Write-Verbose ("Module {0} version '{1}' will not be installed at this time because it is outside of configured maitnenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
           }
