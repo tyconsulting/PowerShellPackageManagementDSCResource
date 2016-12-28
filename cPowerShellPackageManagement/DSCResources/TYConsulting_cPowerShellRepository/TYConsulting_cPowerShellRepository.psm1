@@ -30,8 +30,23 @@ Function Get-TargetResource
 		  [System.String]
 		  $PackageManagementProvider = 'NuGet'
     )
+    #Set-StrictMode -Off
+    Write-Verbose "Checking if PowerShellGet module is imported."
+    if (Get-Module -Name PowerShellGet)
+    {
+      Write-Verbose "PowerShellGet module already imported."
+    } else {
+      Write-Verbose "PowerShellGetModule not imported. importing now"
+      Write-Verbose "PS Module Path: '$env:PSModulePath'"
+      If (Get-Module -Name PowerShellGet -ListAvailable)
+      {
+        Import-Module PowerShellGet -Global -Force
+      } else {
+        Write-Verbose "Unable to find PowerShellGet module."
+      }
+    }
     Write-Verbose "Checking if PS Repository '$Name' exists."
-    $PSRepository = Get-PSRepository -Name $Name -ErrorVariable ev1 -ErrorAction SilentlyContinue
+    $PSRepository = PowerShellGet\Get-PSRepository -Name $Name -ErrorVariable ev1 -ErrorAction SilentlyContinue
     If ($null -eq $ev1 -or $ev1.count -eq 0)
     {
       Write-Verbose "PS Repository '$Name' is Present."
@@ -43,7 +58,7 @@ Function Get-TargetResource
     
     $GetTargetResourceResult = $null
     $GetTargetResourceResult = @{
-      Name = $PSRepository.Name
+      Name = $Name
       Ensure = $Ensure
       InstallationPolicy = $PSRepository.InstallationPolicy
       SourceLocation = $PSRepository.SourceLocation
@@ -84,9 +99,24 @@ Function Set-TargetResource
 		  [System.String]
 		  $PackageManagementProvider = 'NuGet'
     )
+    #Set-StrictMode -Off
+    Write-Verbose "Checking if PowerShellGet module is imported."
+    if (Get-Module -Name PowerShellGet)
+    {
+      Write-Verbose "PowerShellGet module already imported."
+    } else {
+      Write-Verbose "PowerShellGetModule not imported. importing now"
+      Write-Verbose "PS Module Path: '$env:PSModulePath'"
+      If (Get-Module -Name PowerShellGet -ListAvailable)
+      {
+        Import-Module PowerShellGet -Global -Force
+      } else {
+        Write-Verbose "Unable to find PowerShellGet module."
+      }
+    }
     #$PSRepository = Get-PSRepository | Where-Object {$_.Name -ieq $Name}
     Write-Verbose "Ensure PS Repository '$Name' is '$Ensure'."
-    $PSRepository = Get-PSRepository -Name $Name -ErrorVariable ev2 -ErrorAction SilentlyContinue
+    $PSRepository = PowerShellGet\Get-PSRepository -Name $Name -ErrorVariable ev2 -ErrorAction SilentlyContinue
     Switch ($Ensure)
     {
       'Present'
@@ -101,7 +131,7 @@ Function Set-TargetResource
             PublishLocation = $PublishLocation
             PackageManagementProvider = $PackageManagementProvider
           }
-          $SetPSRepository = Set-PSRepository @Parms 
+          $SetPSRepository = PowerShellGet\Set-PSRepository @Parms 
         } else {
           Write-Verbose "PS Repository '$Name' does not exist. creating it now."
           $Parms = @{
@@ -111,7 +141,7 @@ Function Set-TargetResource
             PublishLocation = $PublishLocation
             PackageManagementProvider = $PackageManagementProvider
           }
-          $NewPSRepository = Register-PSRepository @Parms
+          $NewPSRepository = PowerShellGet\Register-PSRepository @Parms -ErrorAction SilentlyContinue
         }
       }
       'Absent'
@@ -119,7 +149,7 @@ Function Set-TargetResource
         If ($null -eq $ev2 -or $ev2.count -eq 0)
         {
           Write-Verbose "PS Repository '$Name' exists, removing it now."
-          $RemovePSRepository = Unregister-PSRepository -Name $Name
+          $RemovePSRepository = PowerShellGet\Unregister-PSRepository -Name $Name
         } else {
           Write-Verbose "PS Repository '$Name' does not exist. No need to remove it."
         }
@@ -163,6 +193,7 @@ Function Test-TargetResource
 		  [System.String]
 		  $PackageManagementProvider = 'NuGet'
     )
+    #Set-StrictMode -Off
     $PSRepository = Get-TargetResource @PSBoundParameters
     $Result = ($PSRepository.Ensure -eq $Ensure)
     #If test result is $true and Ensure = "Present", then check PS repository configurations

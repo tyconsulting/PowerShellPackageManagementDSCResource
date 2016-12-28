@@ -58,7 +58,7 @@ Function Get-TargetResource
       Write-Verbose ("Getting all modules from repository  '{0}'." -f $RepositoryName)
     }
 
-    $ModulesInRepo = Find-Module @parms -ErrorVariable ev -ErrorAction SilentlyContinue
+    $ModulesInRepo = PowerShellGet\Find-Module @parms -ErrorVariable ev -ErrorAction SilentlyContinue
     Write-Verbose "Modules found in repository: $($ModulesInRepo.Count)"
     Foreach ($ModuleInRepo in $ModulesInRepo)
     {
@@ -122,6 +122,9 @@ Function Set-TargetResource
 		  [System.Int32]
 		  $MaintenanceLengthMinute
     )
+    Write-Verbose "Getting Install-Module command details."
+    $InstallModuleCmdInfo = Get-command Install-Module
+
     Write-Output ("Getting modules from repository  '{0}'." -f $RepositoryName)
     $parms = @{
       Repository = $RepositoryName
@@ -143,7 +146,7 @@ Function Set-TargetResource
       Write-Verbose 'Maintenance window is not specified. It will be ignored.'
       $bOKtoAction = $true
     }
-    $ModulesInRepo = Find-Module @parms -ErrorVariable ev -ErrorAction SilentlyContinue
+    $ModulesInRepo = PowerShellGet\Find-Module @parms -ErrorVariable ev -ErrorAction SilentlyContinue
 
     Foreach ($ModuleInRepo in $ModulesInRepo)
     {
@@ -159,7 +162,7 @@ Function Set-TargetResource
             if ($bOKtoAction)
             {
               Write-Verbose ("Uinstalling Module {0} version '{1}'." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
-              $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -RequiredVersion $ModuleInRepo.Version -Force -ErrorVariable ev -ErrorAction SilentlyContinue
+              $UninstallModule = PowerShellGet\Uninstall-Module -Name $ModuleInRepo.Name -RequiredVersion $ModuleInRepo.Version -Force -ErrorVariable ev -ErrorAction SilentlyContinue
             } else {
               Write-Verbose ("Module {0} version '{1}' will not be uninstalled at this time because it is out side of configured maintenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
             }
@@ -168,7 +171,7 @@ Function Set-TargetResource
             if ($bOKtoAction)
             {
               Write-Verbose ("Uinstalling all versions of Module {0}." -f $ModuleInRepo.Name)
-              $UninstallModule = Uninstall-Module -Name $ModuleInRepo.Name -AllVersions -Force -ErrorVariable ev -ErrorAction SilentlyContinue
+              $UninstallModule = PowerShellGet\Uninstall-Module -Name $ModuleInRepo.Name -AllVersions -Force -ErrorVariable ev -ErrorAction SilentlyContinue
             } else {
               Write-Verbose ("All versions of Module {0} will not be uninstalled at this time because it is outside of configured maintenance window." -f $ModuleInRepo.Name)
             }
@@ -181,7 +184,15 @@ Function Set-TargetResource
           if ($bOKtoAction)
           {
             Write-Verbose ("Installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
-            $InstallModule = Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber
+            If ($InstallModuleCmdInfo.Parameters.containskey("AllowClobber"))
+            {
+              Write-Verbose "Installing the module using Install-Module cmdlet with -AllowClobber switch."
+              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber
+            } else {
+              Write-Verbose "Installing the module using Install-Module cmdlet without -AllowClobber switch."
+              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers
+            }
+            
           } else {
             Write-Verbose ("Module {0} version '{1}' will not be installed at this time because it is outside of configured maitnenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
           }
