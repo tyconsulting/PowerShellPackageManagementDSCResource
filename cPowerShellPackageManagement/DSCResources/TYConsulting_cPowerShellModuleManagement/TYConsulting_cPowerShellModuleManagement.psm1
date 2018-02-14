@@ -79,7 +79,24 @@ Function Get-TargetResource
       $objLocalModule = new-object PSObject -Property $objProperties
       $arrModules +=$objLocalModule
     }
-    ,$arrModules
+
+    if (@($arrModules | Where-Object { $_.Ensure -eq 'Absent' }).Count -gt 0)
+    {
+      $Ensure = 'Absent'
+    } else {
+      $Ensure = 'Present'
+    }
+
+    $GetTargetResourceResult = $null
+    $GetTargetResourceResult = @{
+      Ensure = $Ensure
+      PSModuleName = $PSModuleName
+      RepositoryName = $RepositoryName
+      MaintenanceStartHour = $MaintenanceStartHour
+      MaintenanceStartMinute = $MaintenanceStartMinute
+      MaintenanceLengthMinute = $MaintenanceLengthMinute
+    }
+    $GetTargetResourceResult
 }
 
 Function Set-TargetResource
