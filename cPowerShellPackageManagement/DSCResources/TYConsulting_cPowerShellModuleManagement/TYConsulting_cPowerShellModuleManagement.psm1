@@ -187,10 +187,10 @@ Function Set-TargetResource
             If ($InstallModuleCmdInfo.Parameters.containskey("AllowClobber"))
             {
               Write-Verbose "Installing the module using Install-Module cmdlet with -AllowClobber switch."
-              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber
+              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber -AcceptLicence
             } else {
               Write-Verbose "Installing the module using Install-Module cmdlet without -AllowClobber switch."
-              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers
+              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AcceptLicence
             }
             
           } else {
