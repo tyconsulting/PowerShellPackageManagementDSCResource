@@ -183,16 +183,26 @@ Function Set-TargetResource
         {
           if ($bOKtoAction)
           {
-            Write-Verbose ("Installing Module {0} version '{1}' now." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
-            If ($InstallModuleCmdInfo.Parameters.containskey("AllowClobber"))
+            If ($InstallModuleCmdInfo.Parameters.containskey("AcceptLicense"))
             {
-              Write-Verbose "Installing the module using Install-Module cmdlet with -AllowClobber switch."
-              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber -AcceptLicence
+              If ($InstallModuleCmdInfo.Parameters.containskey("AllowClobber"))
+              {
+                Write-Verbose "Installing the module using Install-Module cmdlet with -AcceptLicense and -AllowClobber switch."
+                $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber -AcceptLicense
+              } else {
+                Write-Verbose "Installing the module using Install-Module cmdlet with -AcceptLicense switch, but without -AllowClobber switch."
+                $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AcceptLicense
+              } 
             } else {
-              Write-Verbose "Installing the module using Install-Module cmdlet without -AllowClobber switch."
-              $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AcceptLicence
+              If ($InstallModuleCmdInfo.Parameters.containskey("AllowClobber"))
+              {
+                Write-Verbose "Installing the module using Install-Module cmdlet without -AcceptLicense, but with -AllowClobber switch."
+                $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers -AllowClobber
+              } else {
+                Write-Verbose "Installing the module using Install-Module cmdlet without -AcceptLicense and -AllowClobber switch."
+                $InstallModule = PowerShellGet\Install-Module -Name $($ModuleInRepo.Name) -RequiredVersion $($ModuleInRepo.Version) -Repository $RepositoryName -Force -Scope AllUsers
+              } 
             }
-            
           } else {
             Write-Verbose ("Module {0} version '{1}' will not be installed at this time because it is outside of configured maitnenance window." -f $ModuleInRepo.Name, $ModuleInRepo.Version)
           }
